@@ -11,7 +11,7 @@ has context => (
 );
 
 has warnlevel => (
-  is => 'rw';
+  is => 'rw',
   isa => 'Int',
   default => 2,
 );
@@ -199,18 +199,19 @@ sub scan_inputs {
 
     my $type = -d $file ? "dir" : "file";
     my $mtime = (stat _)[9];
-    my $input = { dir => $dir, $basename => $fn, filename => $file,
+    my $input = { dir => $dir, basename => $fn, filename => $file,
                   mtime => $mtime, type => $type };
     push @{$self->inputs}, $input;
 
     if ($type eq "dir") {
-      unless (opendir my($dh), $file) {
+      my $dh;
+      unless (opendir $dh, $file) {
         $self->warn(1, sprintf("Couldn't read directory '%s': %s; skipping\n",
                                $file, $!));
         next;
       }
       my @dirents = grep { $_ ne "." && $_ ne ".." } readdir $dh;
-      push @dirs, map { [ $file, $_ ] } @dirents;
+      push @queue, map { [ $file, $_ ] } @dirents;
     }
   }
 }
@@ -237,14 +238,15 @@ sub warn {
 sub fatal_o_item {
   my ($self, $format, $output, $item) = @_;
   my @inputs = @{$item->{input}};
-  $self->warn(sprintf $msg,
+  $self->warn(sprintf $format,
               $output,
               join(", " => @inputs));
 }
 
 sub emit {
-  warn @_;
+  CORE::warn @_;
 }
 
 sub _set { map { $_ => 1 } @_ }
 
+1;

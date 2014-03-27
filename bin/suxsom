@@ -12,6 +12,7 @@ for my $arg (@ARGV) {
     $param->{lc $1} = 1;
   }
 }
+exit 0 if $param->{dry_run};
 
 my $c_arg = {};
 { my $OK = 1;
@@ -26,5 +27,6 @@ my $c_arg = {};
 $c_arg->{context} = { args => $param };
 $c_arg->{warnlevel} = $param->{warnlevel} if exists $param->{warnlevel};
 
+my $blog = Suxsom->new($c_arg);
+exit($blog->run ? 0 : 1);
 
-exit Suxsom->new($c_arg)->run ? 0 : 1;
