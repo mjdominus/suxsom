@@ -1,0 +1,30 @@
+#!perl
+
+use Suxsom;
+
+my $param = {};
+for my $arg (@ARGV) {
+  if ($arg =~ /^-*(.*?)=(.*)/) {
+    $param->{lc $1} = $2;
+  } elsif ($arg =~ /^-*no(.*)/) {
+    $param->{lc $1} = 0;
+  } elsif ($arg =~ /^-*(.*)/) {
+    $param->{lc $1} = 1;
+  }
+}
+
+my $c_arg = {};
+{ my $OK = 1;
+  for my $required (qw(input_dir output_dir plugin_dir)) {
+    $c_arg->{$required} = $param->{$required} or do {
+      warn "suxsom: Missing required argument '$required'\n";
+      $OK = 0;
+    }
+  }
+  exit 1 unless $OK;
+}
+$c_arg->{context} = { args => $param };
+$c_arg->{warnlevel} = $param->{warnlevel} if exists $param->{warnlevel};
+
+
+exit Suxsom->new($c_arg)->run ? 0 : 1;

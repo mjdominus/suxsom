@@ -1,0 +1,18 @@
+
+meta: META section removal and META database maintenance
+tags: maintain tag database
+nonotyet: disable items marked as Published: 0 or Published: (future date)
+          or that are accompanied by .notyet files
+readfiles: load input files into input items
+macros: macro processing
+booklink: booklink processing
+formula: formula processing
+main: mappings for main page and index.atom index.rss
+indexes: mappings for subject index pages (e.g., math/index.html,rss,atom)
+articles: mappings for single-article files
+dates: mappings for redirection pages for /2013/05/09/index.html
+atom: build atom files
+rss: build rss files
+html: build html files
+redirect: build redirection pages
+toc: build toc for sidebar

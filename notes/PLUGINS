@@ -1,0 +1,37 @@
+
+Methods that may be provided by plugins:
+
+new(ctx)
+  return a plugin object
+
+will_build(ctx, output_file, IO item)
+  return true if the plugin will attempt to build the output file for the IO item
+  false if not
+
+build(ctx, output_file, IO item)
+  actually try to build the output file.  return true if successful
+
+initialize_input($ctx, $input)
+  Modify the $input node somehow. For example, if there is a filename
+  but no contents, read the contents and store them in the node.
+  Indexers run during this phase. One plugin will annotate each node
+  with the file's last-modified date. Another will annotate each node
+  with the file's should-be-published status. Another, if running in
+  test mode, will switch the should-be-published status to true but
+  annotate the item with a tag that is noticed during the build phase
+  and results in an UNPUBLISHED header being added to the output.
+
+generate(ctx, input_nodes)
+  Return a list of io_items that describe output files that should be generated
+
+finished(ctx)
+  Run just before the program shuts down
+
+
+You may be tempted to have 'build' produce output objects which are
+later written to output files, but this is a bad idea; you should not
+be munging HTML.  Instead of embedded a %%TOC HERE%% code in the
+output which is later substituted with a TOC, there should be a TOC
+plugin that builds the toc and puts it into the context.  The HTML
+builder can then get the toc and insert it at the time the file is
+written.
