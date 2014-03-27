@@ -28,10 +28,41 @@ finished(ctx)
   Run just before the program shuts down
 
 
-You may be tempted to have 'build' produce output objects which are
-later written to output files, but this is a bad idea; you should not
-be munging HTML.  Instead of embedded a %%TOC HERE%% code in the
-output which is later substituted with a TOC, there should be a TOC
-plugin that builds the toc and puts it into the context.  The HTML
-builder can then get the toc and insert it at the time the file is
-written.
+You may be tempted
+to have 'build' produce output objects
+which are later written to output files,
+but this is a bad idea.
+You should not be munging HTML.
+Instead of embedding a %%TOC HERE%% code in the output
+which is later substituted with a TOC,
+there should be a TOC plugin
+that builds the toc
+and puts it into the context.
+The HTML builder can then get the toc
+from the context
+and insert it into the output
+at the time the file is written.
+
+But how are you going to make something like BOOKLINK work then?  
+And how are you going to handle markdown processing?
+There should be a markdown processor
+which gets control before the standard HTML processor.
+
+Idea: output plugins, 
+such as html/rss/atom,
+will look for an output_text element
+in the input object.
+If it's missing, they die.
+The loader plugin will initialize it
+with the original file text.
+The macro processor can modify it;
+the markdown processor will replace it with HTML.
+Input items will have a MIME type
+which can be modified as necessary.
+
+Idea: add a debug flag to Suxsom
+which describe which plugins
+are actually called
+during each phase of processing.
+
+
