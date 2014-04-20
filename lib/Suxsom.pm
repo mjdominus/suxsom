@@ -50,7 +50,7 @@ has io_items => (
 
 sub run {
   my ($self, $opt) = @_;
-  $self->load_plugins;
+  $self->load_plugins($self->plugin_dir);
   $self->scan_inputs;           # locate input files
   $self->initialize_inputs;            # create input objects
   $self->generate;              # generate input-output mappings
@@ -167,8 +167,7 @@ sub build_output {
 }
 
 sub load_plugins {
-  my ($self) = @_;
-  my $dir = $self->plugin_dir;
+  my ($self, $dir) = @_;
   opendir my($dh), $dir or do {
     $self->warn(0, sprintf "Couldn't read plugin dir '%s': %s",
                 $dir, $!);
@@ -179,11 +178,16 @@ sub load_plugins {
   my @files = sort grep !/^\./, readdir $dh;
   my $OK = 1;
   for my $file (@files) {
-    my $plugin_class = require $file;
-    $plugin->{$plugin_class} = $plugin_class->new($self->context) or do {
-      $self->warn(0, sprintf("Couldn't initialize plugin '%s'", $file));
-      $OK = 0;
-    };
+    if (-d $file) {
+      $self->load_plugins("$dir/$file");
+    } else {
+      require $file;
+      my $plugin_class = $file;
+      $plugin->{$plugin_class} = $plugin_class->new($self->context) or do {
+        $self->warn(0, sprintf("Couldn't initialize plugin '%s'", $file));
+        $OK = 0;
+      };
+    }
   }
   exit 1 unless $OK;
 }
