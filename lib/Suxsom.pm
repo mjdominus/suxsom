@@ -52,11 +52,65 @@ sub run {
   my ($self, $opt) = @_;
   $self->load_plugins($self->plugin_dir);
   $self->scan_inputs;           # locate input files
-  $self->initialize_inputs;            # create input objects
+  $self->initialize_inputs;     # create input objects
   $self->generate;              # generate input-output mappings
   $self->check_mappings or exit 1;
   $self->build_all;
   $self->run_plugins("finished");
+}
+
+sub load_plugins {
+  my ($self, $dir) = @_;
+  opendir my($dh), $dir or do {
+    $self->warn(0, sprintf "Couldn't read plugin dir '%s': %s",
+                $dir, $!);
+    exit 2;
+  };
+  my $plugin = $self->plugin_hash;
+
+  my @files = sort grep !/^\./, readdir $dh;
+  my $OK = 1;
+  for my $file (@files) {
+    if (-d $file) {
+      $self->load_plugins("$dir/$file");
+    } else {
+      require $file;
+      my $plugin_class = $file;
+      $plugin->{$plugin_class} = $plugin_class->new($self->context) or do {
+        $self->warn(0, sprintf("Couldn't initialize plugin '%s'", $file));
+        $OK = 0;
+      };
+    }
+  }
+  exit 1 unless $OK;
+}
+
+# traverse the input directory and build input items for each file and
+# directory found therein
+sub scan_inputs {
+  my ($self) = @_;
+  my @queue = [$self->input_dir, ""];
+  while (@queue) {
+    my ($dir, $fn) = @{shift @queue};
+    my $file = "$dir/$fn";
+
+    my $type = -d $file ? "dir" : "file";
+    my $mtime = (stat _)[9];
+    my $input = { dir => $dir, basename => $fn, filename => $file,
+                  mtime => $mtime, type => $type };
+    push @{$self->inputs}, $input;
+
+    if ($type eq "dir") {
+      my $dh;
+      unless (opendir $dh, $file) {
+        $self->warn(1, sprintf("Couldn't read directory '%s': %s; skipping\n",
+                               $file, $!));
+        next;
+      }
+      my @dirents = grep { $_ ne "." && $_ ne ".." } readdir $dh;
+      push @queue, map { [ $file, $_ ] } @dirents;
+    }
+  }
 }
 
 sub initialize_inputs {
@@ -164,60 +218,6 @@ sub build_output {
   $self->fatal_o_item("Couldn't find any plugin willing to build '%s' from inputs <%s>",
                       $output, $item);
   return;
-}
-
-sub load_plugins {
-  my ($self, $dir) = @_;
-  opendir my($dh), $dir or do {
-    $self->warn(0, sprintf "Couldn't read plugin dir '%s': %s",
-                $dir, $!);
-    exit 2;
-  };
-  my $plugin = $self->plugin_hash;
-
-  my @files = sort grep !/^\./, readdir $dh;
-  my $OK = 1;
-  for my $file (@files) {
-    if (-d $file) {
-      $self->load_plugins("$dir/$file");
-    } else {
-      require $file;
-      my $plugin_class = $file;
-      $plugin->{$plugin_class} = $plugin_class->new($self->context) or do {
-        $self->warn(0, sprintf("Couldn't initialize plugin '%s'", $file));
-        $OK = 0;
-      };
-    }
-  }
-  exit 1 unless $OK;
-}
-
-# traverse the input directory and build input items for each file and directory
-# found therein
-sub scan_inputs {
-  my ($self) = @_;
-  my @queue = [$self->input_dir, ""];
-  while (@queue) {
-    my ($dir, $fn) = @{shift @queue};
-    my $file = "$dir/$fn";
-
-    my $type = -d $file ? "dir" : "file";
-    my $mtime = (stat _)[9];
-    my $input = { dir => $dir, basename => $fn, filename => $file,
-                  mtime => $mtime, type => $type };
-    push @{$self->inputs}, $input;
-
-    if ($type eq "dir") {
-      my $dh;
-      unless (opendir $dh, $file) {
-        $self->warn(1, sprintf("Couldn't read directory '%s': %s; skipping\n",
-                               $file, $!));
-        next;
-      }
-      my @dirents = grep { $_ ne "." && $_ ne ".." } readdir $dh;
-      push @queue, map { [ $file, $_ ] } @dirents;
-    }
-  }
 }
 
 sub run_plugins {
