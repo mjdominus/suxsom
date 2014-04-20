@@ -87,6 +87,7 @@ sub load_plugins {
 
 # traverse the input directory and build input items for each file and
 # directory found therein
+# Perhaps most of this should be delegated to plugins
 sub scan_inputs {
   my ($self) = @_;
   my @queue = [$self->input_dir, ""];
@@ -97,7 +98,7 @@ sub scan_inputs {
     my $type = -d $file ? "dir" : "file";
     my $mtime = (stat _)[9];
     my $input = { dir => $dir, basename => $fn, filename => $file,
-                  mtime => $mtime, type => $type };
+                  mtime => $mtime, type => $type, path => "$dir/$file" };
     push @{$self->inputs}, $input;
 
     if ($type eq "dir") {
@@ -124,7 +125,8 @@ sub generate {
   my ($self) = @_;
   for my $plugin ($self->plugins) {
     if ($plugin->can("generate")) {
-      push @{$self->io_items}, $plugin->generate($self->context, $self->inputs);
+      push @{$self->io_items},
+        $plugin->generate($self->context, $self->inputs);
     }
   }
 }
