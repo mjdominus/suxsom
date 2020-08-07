@@ -3,18 +3,27 @@ Plugins required before I can abandon Blosxom, in order of importance:
 
 Core functions:
 
-  readfiles: load input files into input items
+  scanfiles: scan the input directories and genreate a product
+  for each input file found
 
-  main: mappings for main page and index.atom index.rss
-  indexes: mappings for subject index pages (e.g., math/index.html,rss,atom)
-  articles: mappings for single-article files
-  dates: mappings for redirection pages for /2013/05/09/index.html
+  readfiles: load input files into each product
 
-  atom: build atom files
-  rss: build rss files
-  html: build html files
+  Next four generate products that just group the input items into articles.
+
+      main: mappings for main page and index.atom index.rss
+      indexes: mappings for subject index pages (e.g., math/index.html,rss,atom)
+      articles: mappings for single-article files
+      dates: mappings for redirection pages for /2013/05/09/index.html
+
+  These three takes the grouping objects from the previous four and build actual outputs:
+
+      atom: build atom files
+      rss: build rss files
+      html: build html files
 
   redirect: build redirection pages
+
+  writefiles: Write output data of finished products to the proper files
 
 Important features:
 

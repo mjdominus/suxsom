@@ -6,7 +6,7 @@ use Moose;
 
 has context => (
   is => 'ro',
-  isa => 'HashRef',
+  isa => 'Suxsom::Context',
   default => sub { {} },
 );
 
@@ -36,26 +36,29 @@ has plugin_hash => (
   },
 );
 
-has inputs => (
-  is => 'ro',
-  isa => 'ArrayRef{HashRef}',
-  default => sub { [] },
-);
-
-has io_items => (
+# These items are hashes
+# which may contain file content from the input files
+# and metainformation like a MIME type
+# or the name of the plugin that created them.
+# Plugins might modify these in place
+# or use them to create new products.
+# Some plugins, seeing a completed product,
+# might write it to a disk file in the appropriate place. 
+has products => (
   is => 'ro',
   isa => 'ArrayRef[HashRef]',
   default => sub { {} },
+  traits => ['Array'],
+  handles => {
+    add_products => 'push',
+  },
 );
 
 sub run {
   my ($self, $opt) = @_;
+  $self->load_config();  
   $self->load_plugins($self->plugin_dir);
-  $self->scan_inputs;           # locate input files
-  $self->initialize_inputs;     # create input objects
-  $self->generate;              # generate input-output mappings
-  $self->check_mappings or exit 1;
-  $self->build_all;
+  $self->build_all or exit 1;
   $self->run_plugins("finished");
 }
 
@@ -123,110 +126,74 @@ sub initialize_inputs {
 
 sub generate {
   my ($self) = @_;
-  for my $plugin ($self->plugins) {
-    if ($plugin->can("generate")) {
-      push @{$self->io_items},
-        $plugin->generate($self->context, $self->inputs);
-    }
-  }
+  $self->run_plugins("generate",
+                     [ $self->inputs ],
+                     sub { $self->add_products(@_) },
+                    );
 }
 
-# Make sure no output file is described by more than one io item
-sub check_mappings {
-  my ($self) = @_;
-  my $OK = 1;
-  $OK &&= $self->check_outputs_unique;
-  $OK &&= $self->check_disabled_inputs_unused;
-  exit 1 unless $OK;
-}
-
-sub check_outputs_unique {
-  my ($self) = @_;
-  my %seen; # list of items that contain each output - should be exactly 1
-  for my $item (@{$self->io_items}) {
-    my $owner = $item->{owner};
-    for my $output (@{$item->{output}}) {
-      push @{$seen{$output}}, $item;
-    }
-  }
-
-  my $OK = 1;
-  for my $output (sort keys %seen) {
-    my @items = @{$seen{$output}};
-    if (@items > 1) {
-      $OK = 0;
-      my $warning = sprintf "Output '$output' is to be generated more than once, by:\n";
-      for my $item (@items) {
-        my $msg = sprintf "  plugin %s (type %s) from inputs <%s>\n",
-          $item->{owner}, $item->{type},
-            join(", " => @{$item->{input}});
-        $warning .= $msg;
-      }
-      $self->warn(0, $warning);
-    }
-  }
-  return $OK;
-}
-
-sub check_disabled_inputs_unused {
-  my ($self) = @_;
-  my $OK = 1;
-  for my $item (@{$self->io_items}) {
-    next unless @{$item->{outputs}};
-    for my $input (@{$item->inputs}) {
-      if ($input->{inactive}) {
-        $self->warn(0, sprintf("Inactive input '%s' is required for outputs <%s>\n",
-                               $input->{filename},
-                               join(", " => @{$item->{outputs}})));
-        $OK = 0;
-      }
-    }
-  }
-  return $OK;
-}
-
+#
+# For each plugin,
+# either run its build_all method on all the current products
+# or run its build method on the current products one at a time.
+# If it fails, report the error and stop after running this plugin.
 sub build_all {
   my ($self) = @_;
-  # At this point the io items are sorted in dependency order
-  for my $item (@{$self->io_items}) {
-    $self->build_item($item);
-  }
-}
-
-# Build all the required outputs for this io item
-sub build_item {
-  my ($self, $item) = @_;
-  my $OK = 1;
-  my %unbuilt_outputs = set(@{$item->{output}});
-  for my $k (keys %unbuilt_outputs) {
-    unless ($self->build_output($k, $item)) {
-      $self->fatal_o_item("Couldn't build output file '%s' from inputs <%s>",
-                          $k, $item);
-      $OK = 0;
-    }
-  }
-  return $OK;
-}
-
-# Build a single output for an io item
-sub build_output {
-  my ($self, $output, $item) = @_;
+  # At this point the products are sorted in dependency order
   for my $plugin ($self->plugins) {
-    if ($plugin->can("will_build") && $plugin->can("build")
-          && $plugin->will_build($self->context, $output, $item)) {
-      return $plugin->build($self->context, $output, $item);
+    my $products = $self->products;
+    my $GOOD = 1;
+    my @new_products;
+    my ($status, $new_products) ;
+    if ($plugin->can("build_all")) {
+      ($status, $new_products) = $plugin->build_all($self->context,
+                                                    $products);
+      if ($status eq "success") {
+        $self->add_products(@$new_products);
+      } else {
+        $self->failed_build_warning($plugin, $status);
+        return;
+      }
+    } elsif ($plugin->can("build")) {
+      for my $item (@$products) {
+        ($status, $new_products) = $plugin->build($item);
+        if ($status eq "success") {
+          $self->add_products(@$new_products);
+        } else {
+          $self->failed_build_warning($plugin, $status, $item);
+          $GOOD = 0;
+        }
+      }
+      return unless $GOOD;
     }
   }
-  $self->fatal_o_item("Couldn't find any plugin willing to build '%s' from inputs <%s>",
-                      $output, $item);
-  return;
+  return 1;
+}
+
+sub failed_build_warning {
+  my ($self, $plugin, $status, $item) = @_;
+  if ($item) {
+    $self->warn(0,
+                sprintf("Plugin '%s' failed to build item '%s': %s",
+                        $plugin->what,
+                        $self->describe_product($item),
+                        $status));
+  } else {
+    $self->warn(0,
+                sprintf("Plugin '%s' failed to build all items: %s",
+                        $plugin->what,
+                        $status));
+  }
 }
 
 sub run_plugins {
   my ($self, $plugin_method, $arglist, $opt) = @_;
   for my $plugin ($self->plugins) {
     if ($plugin->can($plugin_method)) {
-      $plugin->$plugin_method($self->context, @$arglist);
+        my @res = $plugin->$plugin_method($self->context, @$arglist);
+        if ($opt->{postprocess}) {
+            $opt->{postprocess}->(@res);
+        }
     }
   }
 }
@@ -241,18 +208,10 @@ sub warn {
   $self->emit($_) for @msgs;
 }
 
-sub fatal_o_item {
-  my ($self, $format, $output, $item) = @_;
-  my @inputs = @{$item->{input}};
-  $self->warn(sprintf $format,
-              $output,
-              join(", " => @inputs));
-}
-
 sub emit {
   CORE::warn @_;
 }
 
 sub _set { map { $_ => 1 } @_ }
-
 1;
+

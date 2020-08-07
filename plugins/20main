@@ -1,0 +1,46 @@
+#!perl                                 -*- cperl -*-
+#
+# Generate main blog IO items
+#
+
+package Suxsom::Main;
+use Moose;
+extends 'Suxsom::Plugin';
+
+sub what { 'main' }
+
+sub build_all {
+  my ($self, $ctx, $products) = @_;
+  my $n_articles = $ctx->get('main_num_articles') // 12;
+  my $inputs = $self->filter_products(sub {
+                                        $_->{what} eq "inputfile"
+                                          && $_->{last_modified}
+                                            && $_->{published}
+                                          },
+                                      $products);
+  my @inputs = sort { $b->{last_modified} <=> $a->{last_modified} } @$inputs;
+  pop @inputs while @inputs > $n_articles;
+  return {
+    input => \@inputs,
+    owner => $self->what,
+    what => 'main-group',
+    touched_by => [ $self->what ],
+  }, {
+    input => \@inputs,
+    owner => $self->what,
+    output => [ 'index.rss' ],
+    type => 'application/rss+xml',
+    what => 'group',
+    touched_by => [ $self->what ],
+   }, {
+     input => \@inputs,
+     owner => $self->what,
+     output => [ 'index.atom' ],
+     type => 'application/atom+xml',
+     what => 'main-group',
+     touched_by => [ $self->what ],
+   };
+}
+
+1;
+

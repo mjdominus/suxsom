@@ -1,0 +1,54 @@
+#!perl                                 -*- cperl -*-
+#
+# Scan input directory
+# locate input files
+# build products for them
+#
+
+package Suxsom::Scanfiles;
+use Moose;
+extends 'Suxsom::Plugin';
+
+sub what { 'scanfiles' }
+
+sub build_all {
+  my ($self, $ctx, $products) = @_;
+  my @q = $ctx->get("input_dir");
+  my $suffix = $ctx->get("input_file_suffix")
+    // return "Input file suffix not configured";
+  my $slen = length($suffix);
+  my @files;
+  while (@q) {
+    my $file = shift @q;
+    if (-l $file) { next }
+    elsif (-d $file) {
+      if(opendir my($dh), $file) {
+        push @q, map "$file/$_",
+          grep { $_ ne "." && $_ ne ".." } readdir $dh;
+        push @files, {
+          what => "inputdir",
+          path => $file,
+          creator => $self->what,
+          mtime => (stat $file)[9],
+          touched_by => [ $self->what ],
+        };
+      } else {
+        $ctx->warn("00scanfiles: couldn't read directory '$file': $!; continuing\n");
+      }
+    } elsif (-f $file && substr($file, -$slen) eq $suffix) {
+      push @files, {
+        what => "inputfile",
+        path => $file,
+        creator => $self->what,
+        mtime => (stat $file)[9],
+        touched_by => [ $self->what ],
+      };
+    }
+  }
+
+  my $n = @files;
+  $ctx->info("00scanfiles: found $n input files");
+  return \@files;
+}
+
+1;

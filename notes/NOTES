@@ -2,7 +2,7 @@
 1. Plugin 'scan' is called on directories named on command line
    Gathers a list of files
 2. Plugin index called on file list to index tags, metadata, etc.
-3. Plugin 'generate' returns a list of { input => [...], output => [...], type => ..., ... } items
+3. Plugin 'generate' returns a list of { input => [...], output => [...], type => ..., ... } items called "products"
 
    For example: { input => [ last 12 articles ], output => [main index.html, .atom, .rss], type => mainpage }
                 { input => [ all math articles], output => [math.html, math.atom, math.rss], type => index }
