@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+
+import suxsom.db
+import suxsom.object
+
+db = suxsom.db.db()
+
+o = db.find_obj_by_name("tester", "testobject")
+from pprint import pprint
+pprint(o)
