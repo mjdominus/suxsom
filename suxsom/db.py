@@ -20,12 +20,22 @@ class db():
 
     def find_obj_by_id(self, id):
         c = self.conn.cursor()
-        c.execute("select * from obj where id = ?", (id, ))
+        c.execute("select * from object where id = ?", (id, ))
         rec = c.fetchone()
         if rec is None:
             return None
         from pprint import pprint
         pprint(rec)
+
+    def find_obj_by_name(self, owner, name):
+        c = self.conn.cursor()
+        c.execute("select * from object where owner = ? and name = ?", (owner, name))
+        rec = c.fetchone()
+        if rec is None:
+            return None
+        o = suxsom.object.object(name, owner)
+        o.from_rec(rec)
+        return o
 
     def save_obj(self, o):
         o.set_last_modified()

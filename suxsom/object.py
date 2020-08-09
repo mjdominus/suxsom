@@ -11,8 +11,17 @@ class object():
             meta = {}
         self.meta = meta
 
+    def from_rec(self, rec):
+        self.id, self.name, self.owner, self.last_modfied = rec
+
     def set_last_modified(self, last_modified=None):
         if last_modified is None:
             self.last_modified = time.time()
         else:
             self.last_modified = last_modified
+
+    def __str__(self):
+        return f"<object #{self.id} '{self.name}' from '{self.owner}'>"
+
+    def __repr__(self):
+        return self.__str__()
