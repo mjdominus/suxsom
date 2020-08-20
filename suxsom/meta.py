@@ -1,0 +1,3 @@
+
+class meta(dict):
+    pass
