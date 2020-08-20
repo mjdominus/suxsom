@@ -1,7 +1,7 @@
 
 import time
 
-class object():
+class sux():
     def __init__(self, name, owner, last_modified=None, meta=None, id=None):
         self.id = id
         self.name = name
@@ -21,7 +21,7 @@ class object():
             self.last_modified = last_modified
 
     def __str__(self):
-        return f"<object #{self.id} '{self.name}' from '{self.owner}'>"
+        return f"<sux #{self.id} '{self.name}' from '{self.owner}'>"
 
     def __repr__(self):
         return self.__str__()
