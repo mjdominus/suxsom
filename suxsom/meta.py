@@ -1,3 +1,3 @@
 
-class meta(dict):
+class Meta(dict):
     pass

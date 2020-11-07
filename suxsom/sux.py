@@ -1,7 +1,7 @@
 
 import time
 
-class sux():
+class Sux():
     def __init__(self, name, owner, last_modified=None, meta=None, id=None):
         self.id = id
         self.name = name
