@@ -2,7 +2,7 @@
 import time
 
 class Sux():
-    def __init__(self, name, owner, last_modified=None, meta=None, id=None):
+    def __init__(self, name, owner, meta=None, last_modified=None, id=None):
         self.id = id
         self.name = name
         self.owner = owner
