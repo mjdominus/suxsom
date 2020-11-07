@@ -5,9 +5,15 @@ import sys
 
 import suxsom.sux
 
-class db():
-    def __init__(self):
-        self.conn = sqlite3.connect("suxsom.db")
+class DB():
+    def __init__(self, path=None):
+        if path is None:
+            path = self.default_path()
+
+        self.conn = sqlite3.connect(path)
+
+    def default_path(self):
+        return "suxsom.db"
 
     def create_tables(self, d=None):
         if d is None:
@@ -40,7 +46,7 @@ class db():
     def save_sux(self, o):
         o.set_last_modified()
         if o.id is None:
-            print("creating")
+            print("creating sux")
             self.conn.execute("""
             insert into sux(name, owner, last_modified)
             values (?, ?, ?)

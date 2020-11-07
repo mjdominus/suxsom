@@ -4,7 +4,7 @@ import suxsom.db
 import suxsom.sux
 
 db = suxsom.db.db()
-# db.create_tables()
+db.create_tables()
 
 o = suxsom.sux.sux("testobject", "tester")
 id = db.save_sux(o)
