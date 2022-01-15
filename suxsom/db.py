@@ -10,7 +10,7 @@ class DB():
         if path is None:
             path = self.default_path()
 
-        self.conn = sqlite3.connect(path)
+        self.conn = sqlite3.connect(str(path))
 
     def default_path(self):
         return "suxsom.db"

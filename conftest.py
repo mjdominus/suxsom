@@ -1,6 +1,7 @@
 
 from suxsom.db import DB
 import pytest
+import sys
 
 @pytest.fixture
 def suxdb(tmpdir):
