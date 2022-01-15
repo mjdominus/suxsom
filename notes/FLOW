@@ -1,0 +1,25 @@
+
+We are eliminating input and output items.  Everything is simply a
+"product".  A product might contain an input filename, 
+or an input filename plus its contents,
+or it might represent a multiple-article page, 
+in which case it will contain a list of the other product objects that 
+hold the content.
+
+Gnerating the blog will go something like this:
+
+1. scanfiles will generate an input-file product node for each input
+   file it finds
+
+2. readfiles will read in the contents of each files into the input nodes
+
+3. meta will process meta sections in each item; should-be-published will mark each item as suitable for publication, or not; update metadata database; update tag database, etc.
+
+4. Some other plugins (mainpage, subject-archive, date-archive) will
+generate accumulation nodes that group input items into files
+
+5. Some other plugins (html, rss, atom) will generate product files
+that represent the output files and contain the actual output content
+
+6. writefiles will write out the output product files
+

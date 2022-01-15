@@ -1,0 +1,11 @@
+
+* Input items represent input sources.  Products are aggregations that
+  show which groups of inputs turn into an output.
+
+* These whould probably be objects, not simple aggregates.
+
+* Eventually you will want to have everything ignore files that
+  haven't changed since the last run.  Maybe each plugin can have a
+  scratch directory where it can store its results, then fetch them
+  back when needed.
+

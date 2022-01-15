@@ -1,0 +1,37 @@
+
+1. Plugin 'scan' is called on directories named on command line
+   Gathers a list of files
+2. Plugin index called on file list to index tags, metadata, etc.
+3. Plugin 'generate' returns a list of { input => [...], output => [...], type => ..., ... } items called "products"
+
+   For example: { input => [ last 12 articles ], output => [main index.html, .atom, .rss], type => mainpage }
+                { input => [ all math articles], output => [math.html, math.atom, math.rss], type => index }
+                { input => [ single article], output => [ article file.html ], type => article }
+                { input => [ articles for some date ], output => [ date redirect file.html ], type => datefile }
+
+Input and output items should be objects, not strings.  Initially, an
+input item contains only a filename.  Plugins may read the file text
+and store it in the node, or modify the text in the node.  Loading
+input text will be the job of a plugin.  it can annotate the input
+node with the mtime also.
+
+    { input => [], output => [ references to other io items ], type => ..., owner => ... }
+
+Idea: input file turns into text in memory
+
+
+Each item also has an "owner" that says which plugin put the item in
+the list, and may include other opaque data that the plugin
+understands
+
+3. Items are topologically sorted YAGNI - only if there are intermediate files between I and O
+
+4. Each build item is offered to 'build' plugins
+   Build item may build some, all, or none of the outputs
+   Item is passed to later 'build' plugins if some outputs are unbuilt
+   If any output items are unbuilt, throw an error
+5. plugin outputindex called on each output file YAGNI
+
+
+
+
