@@ -1,0 +1,26 @@
+#!perl                                 -*- cperl -*-
+#
+# Load file contents into input items
+#
+
+package Suxsom::Readfiles;
+use Moose;
+extends 'Suxsom::Plugin';
+
+sub build {
+  my ($self, $ctx, $input) = @_;
+  return "success" if $input->{what} ne "inputfile";
+  my $path = $input->{path} or die "Input item missing path!\n";
+  open my($fh), "<", $path or do {
+    $ctx->warn("Couldn't open path '$path' for reading: $!; skipping\n");
+    return "success";
+  };
+  { local $/;
+    $input->{raw_data} = <$fh>;
+    push @{$input->{touched_by}}, $self->what;
+  }
+  return "success";
+}
+
+1;
+

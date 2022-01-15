@@ -1,0 +1,110 @@
+#!perl                                 -*- cperl -*-
+#
+# writefiles
+# Scan the build products and find the ones that should be turned into files
+# Then write them to the appropriate files
+
+package Suxsom::HTML;
+use Moose;
+use Path::Tiny;
+extends 'Suxsom::Plugin';
+
+sub what { 'writefiles' }
+
+sub will_build {
+  my ($self, $context, $output, $item) = @_;
+  $item->{type} eq "text/html";
+}
+
+# XXX
+# This only builds the main page.
+# It should also create products for
+# the subject archive pages
+# and the date archive pages.
+sub build {
+  my ($self, $ctx, $output, $item) = @_;
+  my $n_articles = $ctx->get('main_num_articles') // 12;
+  my @inputs = $self->inputs;
+  @inputs = sort { $b->{mtime} <=> $a->{mtime} } @inputs;
+  pop @inputs while @inputs > $n_articles;
+  return {
+    input => \@inputs,
+    owner => $self->me,
+    output => [ 'index.html' ],
+    type => 'text/html',
+  }, {
+    input => \@inputs,
+    owner => $self->me,
+    output => [ 'index.rss' ],
+    type => 'application/rss+xml',
+   }, {
+     input => \@inputs,
+     owner => $self->me,
+     output => [ 'index.atom' ],
+     type => 'application/atom+xml',
+   };
+}
+
+1;
+
+
+__END__
+## Code moved here from Suxsom.pm;
+## no need to centralize it,
+## ince it can be performed just as well
+## by this plugin
+
+# Make sure no output file is described by more than one product
+sub check_mappings {
+  my ($self) = @_;
+  my $OK = 1;
+  $OK &&= $self->check_outputs_unique;
+  $OK &&= $self->check_disabled_inputs_unused;
+  exit 1 unless $OK;
+}
+
+sub check_outputs_unique {
+  my ($self) = @_;
+  my %seen; # list of items that contain each output - should be exactly 1
+  for my $item (@{$self->products}) {
+    my $owner = $item->{owner};
+    for my $output (@{$item->{output}}) {
+      push @{$seen{$output}}, $item;
+    }
+  }
+
+  my $OK = 1;
+  for my $output (sort keys %seen) {
+    my @items = @{$seen{$output}};
+    if (@items > 1) {
+      $OK = 0;
+      my $warning = sprintf "Output '$output' is to be generated more than once, by:\n";
+      for my $item (@items) {
+        my $msg = sprintf "  plugin %s (type %s) from inputs <%s>\n",
+          $item->{owner}, $item->{type},
+            join(", " => @{$item->{input}});
+        $warning .= $msg;
+      }
+      $self->warn(0, $warning);
+    }
+  }
+  return $OK;
+}
+
+sub check_disabled_inputs_unused {
+  my ($self) = @_;
+  my $OK = 1;
+  for my $item (@{$self->products}) {
+    next unless @{$item->{outputs}};
+    for my $input (@{$item->inputs}) {
+      if ($input->{inactive}) {
+        $self->warn(0, sprintf("Inactive input '%s' is required for outputs <%s>\n",
+                               $input->{filename},
+                               join(", " => @{$item->{outputs}})));
+        $OK = 0;
+      }
+    }
+  }
+  return $OK;
+}
+

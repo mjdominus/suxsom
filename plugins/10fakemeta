@@ -1,0 +1,20 @@
+#!perl                                 -*- cperl -*-
+#
+# Fake up metainformation
+# so I don't have to write a real 10meta plugin yet
+#
+package Fakemeta;
+use Moose;
+extends 'Suxsom::Plugin';
+
+sub build {
+  my ($self, $ctx, $input) = @_;
+  $input->{last_modified} //= $input->{mtime};
+  $input->{published} //= 1;
+  push @{$input->{touched_by}}, $self->what;
+  return "success";
+}
+
+1;
+
+

@@ -1,0 +1,80 @@
+#!perl                                 -*- cperl -*-
+#
+# Generate HTML outputs
+#
+# XXX this plugin is misnamed
+# because it generates products for XML RSS and Atom files
+
+package Suxsom::HTML;
+use Moose;
+use Path::Tiny;
+extends 'Suxsom::Plugin';
+
+for my $tmpl (qw(head body foot)) {
+  has "$tmpl\_template_file" => (
+    is => 'ro',
+    isa => 'Path::Tiny',
+   );
+  has "$tmpl\_template" => (
+    is => 'rw',
+    isa => 'Str',
+    builder => "_build_$tmpl",
+   );
+}
+
+sub _build_head { $_[0]->load_template("head") }
+sub _build_body { $_[0]->load_template("body") }
+sub _build_foot { $_[0]->load_template("foot") }
+
+sub what { 'html' }
+
+sub load_template {
+  my ($self, $which) = @_;
+  my $file_attr = "$which\_template_file";
+  my $template_attr = "$which\_template";
+  my $file = $self->$file_attr;
+  open my($f), "<", $file
+    or die "Couldn't read HTML template file '$file': $!; aborting\n";
+  $self->$template_attr(join "", <$f>);
+}
+
+sub template_file {
+  $_[0]{template_file};
+}
+
+sub will_build {
+  my ($self, $context, $output, $item) = @_;
+  $item->{type} eq "text/html";
+}
+
+# XXX
+# This only builds the main page.
+# It should also create products for
+# the subject archive pages
+# and the date archive pages.
+sub build {
+  my ($self, $ctx, $output, $item) = @_;
+  my $n_articles = $ctx->get('main_num_articles') // 12;
+  my @inputs = $self->inputs;
+  @inputs = sort { $b->{mtime} <=> $a->{mtime} } @inputs;
+  pop @inputs while @inputs > $n_articles;
+  return {
+    input => \@inputs,
+    owner => $self->me,
+    output => [ 'index.html' ],
+    type => 'text/html',
+  }, {
+    input => \@inputs,
+    owner => $self->me,
+    output => [ 'index.rss' ],
+    type => 'application/rss+xml',
+   }, {
+     input => \@inputs,
+     owner => $self->me,
+     output => [ 'index.atom' ],
+     type => 'application/atom+xml',
+   };
+}
+
+1;
+
