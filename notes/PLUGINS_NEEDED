@@ -3,7 +3,7 @@ Plugins required before I can abandon Blosxom, in order of importance:
 
 Core functions:
 
-  scanfiles: scan the input directories and genreate a product
+  scanfiles: scan the input directories and generate a product
   for each input file found
 
   readfiles: load input files into each product

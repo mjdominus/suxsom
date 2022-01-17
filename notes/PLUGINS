@@ -22,7 +22,7 @@ build_all(ctx, products)
    current product
 
 generate(ctx, input_nodes)
-  Return a list products that describe output files that should be generated
+  Return a list of products that describe output files that should be generated
 
 finished(ctx)
   Run just before the program shuts down

@@ -1,0 +1,37 @@
+
+2022 notes
+
+I don't remember what my plan was exactly.  But I think the basic idea is:
+
+1. There's a "context" object into which "products" and other items
+   can be inserted.  Examples of products:
+
+   a. Name of an input file
+   b. Name and contents of an input file
+   b. A menu or the information needed to generate it
+   c. A list of the IDs of the articles that will go on some page
+   d. Tag information
+   e. Formatted output for a page, plus the page filename
+   
+2. Plugin modules transform products; some plugins actually read input
+   files or write output files.
+
+3. Each product is tagged with the name of the plugin that created
+   it and with a string identifying what it is.  A plugin knows what
+   kind of products it needs as input.  For example, the input file
+   loader needs an input file list item in the context.  If it doesn't
+   have its prerequisites, it fails.  (Or maybe invokes some other
+   plugin to create those.)
+
+   See FLOW for ideas about plugins and
+   their products, PLUGINS_NEEDED for list of essential plugins.
+
+4. Programs do one task.  For example, generating and updating the
+   tags database is a separate program from generating the HTML
+   output; generating the atom feed likewise.  Separate programs will
+   typicaly share plugins.
+
+5. Metadata is stored in the sqlite "meta" table.  Products that might
+   need to be saved are stored in the sqlite "sux" table.
+
+
