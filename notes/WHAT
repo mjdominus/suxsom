@@ -1,6 +1,8 @@
 
 2022 notes
 
+# What's the plan?
+
 I don't remember what my plan was exactly.  But I think the basic idea is:
 
 1. There's a "context" object into which "products" and other items
@@ -12,9 +14,12 @@ I don't remember what my plan was exactly.  But I think the basic idea is:
    c. A list of the IDs of the articles that will go on some page
    d. Tag information
    e. Formatted output for a page, plus the page filename
-   
+
 2. Plugin modules transform products; some plugins actually read input
-   files or write output files.
+   files or write output files.  Some plugins read certain products
+   from the context and generate and insert new products; others
+   modify products in-place, typically by amending the product's
+   "meta" data
 
 3. Each product is tagged with the name of the plugin that created
    it and with a string identifying what it is.  A plugin knows what
@@ -32,6 +37,62 @@ I don't remember what my plan was exactly.  But I think the basic idea is:
    typicaly share plugins.
 
 5. Metadata is stored in the sqlite "meta" table.  Products that might
-   need to be saved are stored in the sqlite "sux" table.
+   need to be saved are stored in the sqlite "sux" table.  (I think?
+   Why do products need to be saved, anyway?)
 
 
+# Typical run:
+
+I run `genblog`.  What plugins run, in what order?
+
+1. `scanfiles` looks at the filesystem and generates a list-of-files
+   product with the names and paths of _all_ files
+
+2. `notyet` removes the files from the list-of-files product if the
+   corresponding `.notyet` file exists
+
+3. `readfiles` scans the list-of-files product and constructs an
+   `article` product for each filename in the list.  Each has a meta
+   item "original-content" with the literal file contents, and maybe
+   also this is where filesystem last-modified dates are pulled in.
+
+4. `process-meta` scans over the `article` products, modifying each
+   item to strip the META section off the original-content (maybe in
+   place, maybe not) and also maybe parsing the META section into a
+   `sux.meta["header"]` item.  If there is no META section, it
+   generates stub metadata anyway.
+
+5. `compute-publication-dates` figures out whether an `article`
+   product is considered published and when its intended publication
+   date is.
+
+6. `build-main-page` selects the dozen most-recently-published articles
+   and writes the ordered list of their names into a new `page` item
+
+7. similarly `build-date-pages` and `build-topic-pages` select and
+   order lists of articles from a certain date and articles on a
+   certain topic.  (This could also be done for tags, etc.)
+
+8. `needs-rewriting` goes through article lists and decide which ones
+   will have modified content and need to be regenerated and
+   rewritten, based on last-modified dates or something
+
+9. various content-transformation plugins run, one to translate
+   markdown to HTML, one to expand macros, one to handle formulas, one
+   to do book sidebars, etc.
+
+9. `build-rss-entries` goes through articles listed in all article-list type
+   items, skipping the ones that don't need rewriting, and constructs
+   an rss entry for each one, probably sticks each entry into the meta
+   block for that article item. Similarly `build-atom-entries`.
+
+11. `build-rss-pages` constructs entire RSS file content from the rss
+    entries (but doesn't write the files)
+
+10. `build-recent-menu`, `build-topic-count-menu`, etc. construct sux
+    objects for various sidebar items hat appear on the HTML pages
+
+11. `write-files` safely writes all the files that `needs-rewriting`
+    has identified
+
+Wow, this is a ton of work.  But OK.
