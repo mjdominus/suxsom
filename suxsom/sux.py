@@ -2,9 +2,13 @@
 import time
 
 class Sux():
-    def __init__(self, name, typ, owner, meta=None, last_modified=None, id=None):
+    @classmethod
+    def typ(cls):
+        raise Exception("Abstract class", cls)
+
+    def __init__(self, name, owner, meta=None, last_modified=None, id=None):
         self.id = id
-        self.type = typ
+        self.type = self.typ()
         self.name = name
         self.owner = owner
         self.set_last_modified(last_modified)
@@ -13,7 +17,9 @@ class Sux():
         self.meta = meta
 
     def from_rec(self, rec):
-        self.id, self.name, self.type, self.owner, self.last_modfied = rec
+        self.id, self.name, typ, self.owner, self.last_modfied = rec
+        if typ != self.typ():
+            raise Exception(f"Can't load {self} from record {rec.id}: it has type {typ} but {self.typ()} is required")
 
     def set_last_modified(self, last_modified=None):
         if last_modified is None:
@@ -26,3 +32,11 @@ class Sux():
 
     def __repr__(self):
         return self.__str__()
+
+
+# This should be in the test suite, not here
+# But I don't want to figure out pytest right now
+class TestSux(Sux):
+    @classmethod
+    def typ(cls):
+        return "test type"
