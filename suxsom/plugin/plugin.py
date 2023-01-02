@@ -8,14 +8,14 @@ class Plugin():
         raise Exception("Abstract class", cls)
 
     @classmethod
-    def expected_input_type(cls):
+    def expected_input_types(cls):
         raise Exception("Abstract class", cls)
 
     def __init__(self, ctx):
-        self.ctx= ctx
+        self.ctx = ctx
 
     def find_inputs(self):
-        items = self.ctx.find_by_type(self.expected_input_type())
+        items = self.ctx.find_by_types(self.expected_input_types())
         return items
 
     def do_one_item(self, item):

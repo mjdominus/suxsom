@@ -6,6 +6,11 @@ import re
 import suxsom
 
 class Article(sux):
+    """Functions for dealing with converting disk files to articles,
+    parsing articles, etc.
+
+    Why doesn't this inherit from Sux?
+    """
 
     @classmethod
     def owner(cls):
