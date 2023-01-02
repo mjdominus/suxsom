@@ -30,6 +30,7 @@ I don't remember what my plan was exactly.  But I think the basic idea is:
 
    See FLOW for ideas about plugins and
    their products, PLUGINS_NEEDED for list of essential plugins.
+   (Note 20230102: I think the "typical" run section below obsoletes this.)
 
 4. Programs do one task.  For example, generating and updating the
    tags database is a separate program from generating the HTML
@@ -39,7 +40,6 @@ I don't remember what my plan was exactly.  But I think the basic idea is:
 5. Metadata is stored in the sqlite "meta" table.  Products that might
    need to be saved are stored in the sqlite "sux" table.  (I think?
    Why do products need to be saved, anyway?)
-
 
 # Typical run:
 
@@ -96,3 +96,21 @@ I run `genblog`.  What plugins run, in what order?
     has identified
 
 Wow, this is a ton of work.  But OK.
+
+20230102 thoughts on rereading this:
+
+That's a lot of plugins, but maybe many of the individual plugins will
+require only a little code.  Maybe a typical plugin will look like
+
+        (boilerplate start to open database etc)
+        run_for_each_product('product-tag', function_name)
+
+        def function_name(prod):
+           ...
+
+Something needs to orchestrate all this stuff, right?  Or is there
+just a `genblog` program with a call like this?
+
+     run_plugins(scanfiles, notyet, (etc))
+
+Maybe I don't need any kind of orchestrator, at least at first.
