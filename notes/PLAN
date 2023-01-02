@@ -1,12 +1,13 @@
 
-2022 notes
+# 2022 notes
 
-# What's the plan?
+## What's the plan?
 
 I don't remember what my plan was exactly.  But I think the basic idea is:
 
 1. There's a "context" object into which "products" and other items
-   can be inserted.  Examples of products:
+   can be inserted.  (20230102: No, the "context" is just a sqllite database.)
+   Examples of products:
 
    a. Name of an input file
    b. Name and contents of an input file
@@ -41,7 +42,7 @@ I don't remember what my plan was exactly.  But I think the basic idea is:
    need to be saved are stored in the sqlite "sux" table.  (I think?
    Why do products need to be saved, anyway?)
 
-# Typical run:
+## Typical run:
 
 I run `genblog`.  What plugins run, in what order?
 
@@ -97,7 +98,9 @@ I run `genblog`.  What plugins run, in what order?
 
 Wow, this is a ton of work.  But OK.
 
-20230102 thoughts on rereading this:
+# 2023 Notes
+
+## Thoughts on rereading this 20230102:
 
 That's a lot of plugins, but maybe many of the individual plugins will
 require only a little code.  Maybe a typical plugin will look like
@@ -114,3 +117,12 @@ just a `genblog` program with a call like this?
      run_plugins(scanfiles, notyet, (etc))
 
 Maybe I don't need any kind of orchestrator, at least at first.
+
+## What is the API for a plugin?
+
+* It is passed the db handle
+* It makes some changes to the database (or raises an exception?)
+* Is that it?
+* At least some plugins need access to the filesystem.  They can get
+  passed a pathlib object that points to the pertinent directory or
+  file.  This should be fairly easy to mock for tests.
