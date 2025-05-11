@@ -5,4 +5,5 @@ CREATE TABLE `meta` (
   v blob,
   UNIQUE(sux_id, k),
   FOREIGN KEY(sux_id) REFERENCES sux(id)
-)
+);
+
