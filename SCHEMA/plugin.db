@@ -1,0 +1,7 @@
+CREATE TABLE `plugin` (
+  id integer PRIMARY KEY,
+  name varchar(16) NOT NULL,
+  k varchar(64) NOT NULL,
+  v blob,
+  UNIQUE(plugin, k)
+)
